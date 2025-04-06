@@ -282,7 +282,7 @@
       }
       
       // URL de tu API Flask
-      const API_URL = 'http://localhost:5000/ocr';
+      const API_URL = 'https://image2textapi.onrender.com/ocr';
       
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -301,10 +301,10 @@
           showLoading(true);
           hideError();
           
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            body: formData,
-          });
+          const response = await fetch(`${API_URL}?t=${Date.now()}`, {
+  method: 'POST',
+  body: formData,
+});
           
           if (!response.ok) {
             const errorData = await response.json();
