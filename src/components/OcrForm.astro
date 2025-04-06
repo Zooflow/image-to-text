@@ -318,28 +318,24 @@
             resultText.classList.remove('scale-105');
           }, 300);
         } catch (error) {
-          showError(error.message || 'Error al conectar con el servidor');
-          resultText.textContent = '';
+          console.error(error);
+          showError(error.message);
         } finally {
           showLoading(false);
         }
       });
-      
+
       function showLoading(show) {
         loadingIndicator.classList.toggle('hidden', !show);
       }
-      
+
       function showError(message) {
         errorMessage.textContent = message;
         errorMessage.classList.remove('hidden');
-
-        // Hacer que el mensaje de error desaparezca después de 5 segundos
-        setTimeout(() => {
-          hideError();
-        }, 5000);
       }
-      
+
       function hideError() {
+        errorMessage.textContent = '';
         errorMessage.classList.add('hidden');
       }
     });
