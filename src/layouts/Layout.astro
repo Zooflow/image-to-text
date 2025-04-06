@@ -4,6 +4,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
+import "../styles/global.css";
 ---
 
 <!doctype html>
@@ -34,7 +35,7 @@ const { title } = Astro.props;
 	}
 	html {
 		font-family: system-ui, sans-serif;
-		background: #13151a;
+		background: #7D0A0A;
 	}
 	code {
 		font-family:
@@ -47,4 +48,44 @@ const { title } = Astro.props;
 			Courier New,
 			monospace;
 	}
+
+	/* Estilos para el efecto ripple avanzado */
+    .ripple-button {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.7);
+        transform: scale(0);
+        animation: ripple-effect 0.8s linear;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple-effect {
+        0% {
+            transform: scale(0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    /* Animación de rebote para los íconos */
+    button:hover svg {
+        animation: bounce 1s infinite;
+    }
+    
+    @keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-3px);
+        }
+    }
 </style>

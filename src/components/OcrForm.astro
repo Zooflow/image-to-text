@@ -1,0 +1,346 @@
+<div class="p-5">
+    <form action="" id="ocrForm" class="">
+        <div class="flex justify-center items-center">
+            <div id="dropZone" class="transition-all duration-400 relative flex justify-center items-center">
+                <button type="button" id="uploadButton" class="ripple-button bg-cream text-light-red py-4 px-8 sm:py-5 sm:px-16 sm:text-xl rounded-full transition-all duration-300 hover:bg-light-red hover:text-cream hover:shadow-lg transform hover:-translate-y-1 cursor-pointer flex items-center gap-2">
+                    Sube o arrastra tu imagen 
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                        <path d="M7 9l5 -5l5 5" />
+                        <path d="M12 4l0 12" />
+                    </svg>
+                </button>
+                <input type="file" id="imageFile" name="file" accept="image/*" required class="hidden">
+                <div id="dropOverlay" class="absolute inset-0 w-full h-full bg-light-red bg-opacity-90 text-cream text-lg flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300 rounded-lg border-2 border-dashed border-white">
+                    <div class="text-center p-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                            <path d="M7 9l5 -5l5 5" />
+                            <path d="M12 4l0 12" />
+                        </svg>
+                        <p>Suelta la imagen aquí</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-center items-center py-12">
+            <button type="submit" id="submitBtn" class="ripple-button bg-cream text-light-red py-4 px-8 sm:py-5 sm:px-16 sm:text-xl rounded-full transition-all duration-300 hover:bg-light-red hover:text-cream hover:shadow-lg transform hover:-translate-y-1 cursor-pointer flex items-center gap-2">
+                Extraer texto 
+                <svg xmlns="http://www.w3.org/2000/svg" class="inline" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+                    <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+                    <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                    <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+                    <path d="M8 12h8" />
+                    <path d="M8 9h6" />
+                    <path d="M8 15h4" />
+                </svg>
+            </button>
+        </div>
+    </form>
+
+    <div class=" flex flex-col items-center justify-center">
+        <p class="text-light-gray text-2xl py-2 text-center">Texto extraído:</p>
+        <div id="resultText" class="min-h-60 w-full max-w-2xl p-4 sm:p-6 bg-cream rounded shadow transition-all duration-300"></div>
+    </div>
+
+    <div id="loadingIndicator" class="hidden text-center py-4 text-blue-600">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-2"></div>
+        Procesando imagen...
+    </div>
+    <div id="errorMessage" class="hidden text-center py-4 text-light-red"></div>
+</div>
+
+<style>
+    /* Estilos para el efecto ripple */
+    .ripple-button {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.7);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+    
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+    
+    /* Estilos para el drag and drop */
+    #dropZone.drag-active {
+        min-width: 300px;
+        min-height: 200px;
+    }
+    
+    #dropZone.drag-active #uploadButton {
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    #dropZone.drag-active #dropOverlay {
+        opacity: 1;
+        pointer-events: auto;
+    }
+</style>
+
+<script>
+    // Script para manejar el envío del formulario
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('ocrForm');
+      const resultText = document.getElementById('resultText');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const errorMessage = document.getElementById('errorMessage');
+      const uploadButton = document.getElementById('uploadButton');
+      const fileInput = document.getElementById('imageFile');
+      const dropZone = document.getElementById('dropZone');
+      const dropOverlay = document.getElementById('dropOverlay');
+      
+      // Conectar el botón de subida con el input de archivo
+      uploadButton.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Función para actualizar el botón con el nombre del archivo
+      function updateButtonWithFileName(file) {
+        if (file) {
+          const fileName = file.name;
+          // Limitar el nombre del archivo si es muy largo
+          const displayName = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
+          uploadButton.innerHTML = `Archivo: ${displayName} <svg xmlns="http://www.w3.org/2000/svg" class="inline text-green-500" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>`;
+        }
+      }
+      
+      // Mostrar el nombre del archivo seleccionado
+      fileInput.addEventListener('change', (e) => {
+        if (fileInput.files.length > 0) {
+          updateButtonWithFileName(fileInput.files[0]);
+        }
+      });
+      
+      // Implementar funcionalidad de drag and drop
+      
+      // Prevenir comportamiento predeterminado para permitir drop en todo el documento
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, e => {
+          e.preventDefault();
+          e.stopPropagation();
+        }, false);
+      });
+      
+      // Variables para controlar el estado del drag
+      let dragCounter = 0;
+      
+      // Eventos de drag para el documento completo
+      document.addEventListener('dragenter', (e) => {
+        dragCounter++;
+        if (dragCounter === 1) {
+          // Solo activar en la primera entrada
+          dropZone.classList.add('drag-active');
+        }
+      }, false);
+      
+      document.addEventListener('dragleave', (e) => {
+        dragCounter--;
+        if (dragCounter === 0) {
+          // Solo desactivar cuando se sale completamente
+          dropZone.classList.remove('drag-active');
+        }
+      }, false);
+      
+      document.addEventListener('drop', (e) => {
+        dragCounter = 0;
+        dropZone.classList.remove('drag-active');
+        
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          // Verificar que sea una imagen
+          const file = files[0];
+          if (file.type.startsWith('image/')) {
+            fileInput.files = files;
+            updateButtonWithFileName(file);
+          } else {
+            showError('Por favor, arrastra solo archivos de imagen');
+          }
+        }
+      }, false);
+      
+      // Desactivar efectos de hover en los botones durante drag
+      document.addEventListener('dragenter', () => {
+        const buttons = document.querySelectorAll('.ripple-button');
+        buttons.forEach(button => {
+          button.classList.add('no-hover');
+        });
+      }, false);
+      
+      document.addEventListener('drop', () => {
+        const buttons = document.querySelectorAll('.ripple-button');
+        buttons.forEach(button => {
+          button.classList.remove('no-hover');
+        });
+      }, false);
+      
+      document.addEventListener('dragleave', (e) => {
+        if (dragCounter === 0) {
+          const buttons = document.querySelectorAll('.ripple-button');
+          buttons.forEach(button => {
+            button.classList.remove('no-hover');
+          });
+        }
+      }, false);
+
+      const rippleButtons = document.querySelectorAll('.ripple-button');
+      
+      rippleButtons.forEach(button => {
+        // Efecto ripple al hacer clic
+        button.addEventListener('mousedown', function(e) {
+          if (!dropZone.classList.contains('drag-active')) {
+            createRipple(this, e.clientX, e.clientY);
+          }
+        });
+        
+        // Efecto ripple al pasar el mouse (más sutil)
+        button.addEventListener('mousemove', function(e) {
+          // No crear efectos de ripple durante drag
+          if (dropZone.classList.contains('drag-active')) {
+            return;
+          }
+          
+          // Limitamos la frecuencia del efecto al pasar el mouse
+          if (!this.lastRippleTime || Date.now() - this.lastRippleTime > 500) {
+            createRipple(this, e.clientX, e.clientY, true);
+            this.lastRippleTime = Date.now();
+          }
+        });
+
+        button.addEventListener('mousedown', () => {
+          if (!dropZone.classList.contains('drag-active')) {
+            button.classList.add('scale-95');
+          }
+        });
+        
+        button.addEventListener('mouseup', () => {
+          button.classList.remove('scale-95');
+        });
+        
+        button.addEventListener('mouseleave', () => {
+          button.classList.remove('scale-95');
+        });
+      });
+
+      // Función para crear el efecto ripple
+      function createRipple(button, clientX, clientY, isHover = false) {
+        // No crear efectos de ripple durante drag
+        if (dropZone.classList.contains('drag-active')) {
+          return;
+        }
+        
+        // Obtener la posición del botón
+        const rect = button.getBoundingClientRect();
+        
+        // Calcular la posición del clic relativa al botón
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        
+        // Calcular el tamaño del ripple (debe ser suficientemente grande para cubrir el botón)
+        const size = Math.max(button.offsetWidth, button.offsetHeight) * 2;
+        
+        // Crear el elemento ripple
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        
+        // Aplicar estilos específicos al ripple
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${x - size/2}px`;
+        ripple.style.top = `${y - size/2}px`;
+        
+        // Si es un ripple por hover, hacerlo más sutil
+        if (isHover) {
+          ripple.style.opacity = '0.2';
+          ripple.style.animationDuration = '1.2s';
+        }
+        
+        // Añadir el ripple al botón
+        button.appendChild(ripple);
+        
+        // Eliminar el ripple después de la animación
+        setTimeout(() => {
+          ripple.remove();
+        }, 800);
+      }
+      
+      // URL de tu API Flask
+      const API_URL = 'http://localhost:5000/ocr';
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const file = fileInput.files[0];
+        
+        if (!file) {
+          showError('Por favor selecciona una imagen.');
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          showLoading(true);
+          hideError();
+          
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al procesar la imagen');
+          }
+          
+          const data = await response.json();
+          resultText.textContent = data.texto;
+          resultText.classList.add('scale-105');
+          setTimeout(() => {
+            resultText.classList.remove('scale-105');
+          }, 300);
+        } catch (error) {
+          showError(error.message || 'Error al conectar con el servidor');
+          resultText.textContent = '';
+        } finally {
+          showLoading(false);
+        }
+      });
+      
+      function showLoading(show) {
+        loadingIndicator.classList.toggle('hidden', !show);
+      }
+      
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('hidden');
+
+        // Hacer que el mensaje de error desaparezca después de 5 segundos
+        setTimeout(() => {
+          hideError();
+        }, 5000);
+      }
+      
+      function hideError() {
+        errorMessage.classList.add('hidden');
+      }
+    });
+</script>

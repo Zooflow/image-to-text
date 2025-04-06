@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+    --font-space: "Space Grotesk", monospace;
+    --font-doppel: "Doppelganger-Display", monospace;
+    --font-garamond: "EB Garamond", serif;
+    --color-base: #7D0A0A;
+    --color-light-red: #BF3131;
+    --color-cream: #EAD196;
+    --color-light-gray: #EEEEEE;
+  }
