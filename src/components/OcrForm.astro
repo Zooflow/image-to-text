@@ -302,9 +302,9 @@
           hideError();
           
           const response = await fetch(`${API_URL}?t=${Date.now()}`, {
-  method: 'POST',
-  body: formData,
-});
+            method: 'POST',
+            body: formData,
+        });
           
           if (!response.ok) {
             const errorData = await response.json();
